@@ -103,3 +103,5 @@ jspm_packages/
 *.zip
 *.exe
 *.msi
+win-unpacked/
+release/win-unpacked/

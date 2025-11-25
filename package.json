@@ -1,6 +1,5 @@
 {
   "name": "franguxo-gestor-pedidos",
-<<<<<<< HEAD
   "version": "4.0.3",
   "description": "Franguxo Gestor de Pedidos",
   "main": "main.js",
@@ -8,7 +7,8 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "build": "electron-packager . franguxo-gestor --platform=win32 --arch=x64 --out=dist/",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win",
+    "release": "electron-builder --win --publish always"
   },
   "keywords": [
     "electron",
@@ -33,6 +33,14 @@
     "directories": {
       "output": "release"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "kdumr",
+        "repo": "gestordepedidos",
+        "releaseType": "release"
+      }
+    ],
     "files": [
       "**/*",
       "!dist/**",
@@ -61,56 +69,6 @@
       "installerIcon": "assets/img/franguxoicon.ico",
       "uninstallerIcon": "assets/img/franguxoicon.ico",
       "installerHeaderIcon": "assets/img/franguxoicon.ico"
-=======
-  "version": "1.0.1",
-  "description": "App Electron para acessar o Franguxo - Gestor de Pedidos",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron .",
-    "build": "electron-builder",
-    "dev": "nodemon --exec electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder --publish always"
-  },
-  "author": "Franguxo Team",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1",
-    "nodemon": "^3.0.2"
-  },
-  "build": {
-    "appId": "br.app.franguxo.gestor",
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "kdumr",
-        "repo": "gestordepedidos"
-      }
-    ],
-    "productName": "Franguxo Gestor de Pedidos",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "main.js",
-      "renderer.js",
-      "styles.css",
-      "index.html",
-      "package.json"
-    ],
-    "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "assets/icon.icns"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "assets/icon.png"
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
     }
   }
 }
