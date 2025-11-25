@@ -8,7 +8,7 @@ yarn-error.log*
 dist/
 build/
 out/
-release/win-unpacked
+release/
 
 # OS generated files
 .DS_Store
@@ -103,5 +103,3 @@ jspm_packages/
 *.zip
 *.exe
 *.msi
-win-unpacked/
-release/win-unpacked/
