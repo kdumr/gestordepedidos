@@ -1,0 +1,74 @@
+{
+  "name": "franguxo-gestor-pedidos",
+  "version": "4.0.3",
+  "description": "Franguxo Gestor de Pedidos",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-packager . franguxo-gestor --platform=win32 --arch=x64 --out=dist/",
+    "dist": "electron-builder --win",
+    "release": "electron-builder --win --publish always"
+  },
+  "keywords": [
+    "electron",
+    "franguxo",
+    "pedidos"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^37.2.3",
+    "electron-builder": "^26.0.12",
+    "electron-packager": "^17.1.2",
+    "electron-reload": "^2.0.0-alpha.1"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2",
+    "keytar": "^7.9.0"
+  },
+  "build": {
+    "appId": "br.com.franguxo.gestor",
+    "productName": "Franguxo Gestor de Pedidos",
+    "directories": {
+      "output": "release"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "kdumr",
+        "repo": "gestordepedidos",
+        "releaseType": "release"
+      }
+    ],
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!release/**",
+      "!node_modules/.cache/**"
+    ],
+    "asar": true,
+    "win": {
+      "icon": "assets/img/franguxoicon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Franguxo Gestor",
+      "installerIcon": "assets/img/franguxoicon.ico",
+      "uninstallerIcon": "assets/img/franguxoicon.ico",
+      "installerHeaderIcon": "assets/img/franguxoicon.ico"
+    }
+  }
+}

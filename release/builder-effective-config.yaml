@@ -1,0 +1,29 @@
+directories:
+  output: release
+  buildResources: build
+appId: br.com.franguxo.gestor
+productName: Franguxo Gestor de Pedidos
+files:
+  - filter:
+      - '**/*'
+      - '!dist/**'
+      - '!release/**'
+      - '!node_modules/.cache/**'
+asar: true
+win:
+  icon: assets/img/franguxoicon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Franguxo Gestor
+  installerIcon: assets/img/franguxoicon.ico
+  uninstallerIcon: assets/img/franguxoicon.ico
+  installerHeaderIcon: assets/img/franguxoicon.ico
+electronVersion: 37.8.0
