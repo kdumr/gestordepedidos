@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // Função para substituir apenas &#8211; por '-'
 function replace8211(text) {
   if (!text) return '';
@@ -421,13 +420,6 @@ async function createSessionWithToken(accessToken) {
     return false;
   }
 }
-=======
-const { app, BrowserWindow, Menu, shell, ipcMain, Notification, dialog } = require('electron');
-const path = require('path');
-const { autoUpdater } = require('electron-updater');
-
-let mainWindow;
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -448,7 +440,6 @@ function createWindow() {
     autoHideMenuBar: false
   });
 
-<<<<<<< HEAD
   mainWindow.loadURL(WP_URL + appConfig.wordpress.loginPath);
 
 
@@ -466,11 +457,6 @@ function createWindow() {
       sameSite: c.sameSite
     })));
     
-=======
-  mainWindow.loadURL('https://franguxo.app.br/pedido');
-
-  mainWindow.once('ready-to-show', () => {
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
     mainWindow.maximize();
     mainWindow.show();
     if (process.platform === 'darwin') {
@@ -486,11 +472,7 @@ function createWindow() {
   mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
     const currentUrl = new URL(mainWindow.webContents.getURL());
-<<<<<<< HEAD
     if (parsedUrl.hostname !== WP_HOSTNAME && parsedUrl.hostname !== currentUrl.hostname) {
-=======
-    if (parsedUrl.hostname !== 'franguxo.app.br' && parsedUrl.hostname !== currentUrl.hostname) {
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
       event.preventDefault();
       shell.openExternal(navigationUrl);
     }
@@ -512,7 +494,6 @@ function createWindow() {
       mainWindow.focus();
     }
   });
-<<<<<<< HEAD
 
   // Handlers expostos no preload
   ipcMain.handle('get-app-version', () => app.getVersion());
@@ -555,8 +536,6 @@ function createWindow() {
   ipcMain.handle('loadConfig', () => {
     try { return JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch(e) { return {}; }
   });
-=======
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
 }
 
 function createMenu() {
@@ -576,15 +555,12 @@ function createMenu() {
         },
         { type: 'separator' },
         {
-<<<<<<< HEAD
           label: 'Deslogar',
           accelerator: 'CmdOrCtrl+L',
           click: () => logoutUser()
         },
         { type: 'separator' },
         {
-=======
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
           label: 'Sair',
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
           click: () => app.quit()
@@ -592,15 +568,12 @@ function createMenu() {
       ]
     },
     {
-<<<<<<< HEAD
       label: 'Configurar impressão',
       click: () => {
         openImpressaoWindow();
       }
     },
     {
-=======
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
       label: 'Editar',
       submenu: [
         { label: 'Desfazer', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
@@ -631,7 +604,6 @@ function createMenu() {
       label: 'Ajuda',
       submenu: [
         {
-<<<<<<< HEAD
           label: 'Buscar Atualizações…',
           click: () => {
             if (app.isPackaged) {
@@ -654,19 +626,13 @@ function createMenu() {
           }
         },
         {
-=======
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
           label: 'Sobre',
           click: () => {
             dialog.showMessageBox(mainWindow, {
               type: 'info',
               title: 'Sobre',
               message: 'Franguxo Gestor de Pedidos',
-<<<<<<< HEAD
               detail: `Versão ${app.getVersion()}\n\nAplicativo para acessar o sistema Franguxo de gestão de pedidos.`,
-=======
-              detail: 'Versão 1.0.0\n\nAplicativo para acessar o sistema Franguxo de gestão de pedidos.',
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
               buttons: ['OK']
             });
           }
@@ -680,7 +646,6 @@ function createMenu() {
 }
 
 // --- Funções de atualização automática ---
-<<<<<<< HEAD
 function registerAutoUpdaterEvents() {
   autoUpdater.on('update-available', (info) => {
     const title = 'Atualização disponível';
@@ -708,21 +673,6 @@ function registerAutoUpdaterEvents() {
     } else {
       console.log('Nenhuma atualização disponível.');
     }
-=======
-function checkForUpdates() {
-  autoUpdater.checkForUpdates();
-
-  autoUpdater.on('update-available', (info) => {
-    const notif = new Notification({
-      title: 'Atualização disponível',
-      body: `Versão ${info.version} encontrada. Baixando atualização...`
-    });
-    notif.show();
-  });
-
-  autoUpdater.on('update-not-available', () => {
-    console.log('Nenhuma atualização disponível.');
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
   });
 
   autoUpdater.on('update-downloaded', (info) => {
@@ -739,7 +689,6 @@ function checkForUpdates() {
 
   autoUpdater.on('error', (err) => {
     console.error('Erro no autoUpdater:', err);
-<<<<<<< HEAD
     if (manualUpdateCheck) {
       dialog.showMessageBox(mainWindow, {
         type: 'error',
@@ -1023,27 +972,12 @@ function proceedToMainApp() {
       checkForUpdates();
     }, 1000 * 60 * 10);
   }
-=======
-  });
-}
-
-// --- Inicialização ---
-app.whenReady().then(() => {
-  createWindow();
-  checkForUpdates();
-
-  // Checar atualizações a cada 10 minutos
-  setInterval(() => {
-    checkForUpdates();
-  }, 1000 * 60 * 10);
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
-<<<<<<< HEAD
 }
 
 // Register global IPC handlers
@@ -1199,8 +1133,6 @@ app.whenReady().then(async () => {
     // Em caso de erro não bloqueante, abrir a tela de login como fallback
     createLoginWindow();
   }
-=======
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
 });
 
 app.on('window-all-closed', () => {
@@ -1217,11 +1149,7 @@ app.on('web-contents-created', (event, contents) => {
 
   contents.on('will-navigate', (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
-<<<<<<< HEAD
     if (parsedUrl.hostname !== WP_HOSTNAME) {
-=======
-    if (parsedUrl.hostname !== 'franguxo.app.br') {
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
       event.preventDefault();
       shell.openExternal(navigationUrl);
     }
@@ -1230,9 +1158,6 @@ app.on('web-contents-created', (event, contents) => {
 
 app.on('before-quit', () => {
   // Limpeza se necessário
-<<<<<<< HEAD
   try{ stopLocalPrintServer(); }catch(e){}
   try{ globalShortcut.unregisterAll(); }catch(e){}
-=======
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
 });

@@ -9,7 +9,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Notificações
   showNotification: (title, body) => ipcRenderer.invoke('show-notification', { title, body }),
   // Solicitar restauração da janela ao receber notificação
-<<<<<<< HEAD
   restoreWindowOnNotification: () => ipcRenderer.send('restore-window-on-notification'),
   // Imprimir recibo de teste
   printTestReceipt: () => ipcRenderer.invoke('impressao:printTestReceipt'),
@@ -21,9 +20,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadConfig: () => ipcRenderer.invoke('loadConfig'),
   // Login
   login: (username, password) => ipcRenderer.invoke('login', { username, password })
-=======
-  restoreWindowOnNotification: () => ipcRenderer.send('restore-window-on-notification')
->>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
 });
 
 
