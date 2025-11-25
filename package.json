@@ -1,5 +1,67 @@
 {
   "name": "franguxo-gestor-pedidos",
+<<<<<<< HEAD
+  "version": "4.0.3",
+  "description": "Franguxo Gestor de Pedidos",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-packager . franguxo-gestor --platform=win32 --arch=x64 --out=dist/",
+    "dist": "electron-builder --win"
+  },
+  "keywords": [
+    "electron",
+    "franguxo",
+    "pedidos"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^37.2.3",
+    "electron-builder": "^26.0.12",
+    "electron-packager": "^17.1.2",
+    "electron-reload": "^2.0.0-alpha.1"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2",
+    "keytar": "^7.9.0"
+  },
+  "build": {
+    "appId": "br.com.franguxo.gestor",
+    "productName": "Franguxo Gestor de Pedidos",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!release/**",
+      "!node_modules/.cache/**"
+    ],
+    "asar": true,
+    "win": {
+      "icon": "assets/img/franguxoicon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Franguxo Gestor",
+      "installerIcon": "assets/img/franguxoicon.ico",
+      "uninstallerIcon": "assets/img/franguxoicon.ico",
+      "installerHeaderIcon": "assets/img/franguxoicon.ico"
+=======
   "version": "1.0.1",
   "description": "App Electron para acessar o Franguxo - Gestor de Pedidos",
   "main": "main.js",
@@ -48,6 +110,7 @@
     "linux": {
       "target": "AppImage",
       "icon": "assets/icon.png"
+>>>>>>> bc00745323966873f4ffc73ff90d4073980dcb3d
     }
   }
 }
