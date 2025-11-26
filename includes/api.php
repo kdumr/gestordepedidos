@@ -11,6 +11,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Tolerância de tempo para validação de timestamp (5 minutos em segundos)
+define('MERCADOPAGO_WEBHOOK_TIMESTAMP_TOLERANCE', 300);
+
 /**
  * Valida a assinatura do webhook do Mercado Pago.
  * 
@@ -18,9 +21,10 @@ if (!defined('ABSPATH')) {
  * https://www.mercadopago.com.br/developers/pt/docs/your-integrations/notifications/webhooks
  *
  * @param string $webhook_secret O segredo configurado no Mercado Pago
+ * @param array  &$parsed_body   Referência para retornar o corpo já parseado
  * @return bool True se a assinatura for válida, false caso contrário
  */
-function validar_assinatura_mercadopago($webhook_secret) {
+function validar_assinatura_mercadopago($webhook_secret, &$parsed_body = null) {
     // Obter os headers necessários
     $x_signature = isset($_SERVER['HTTP_X_SIGNATURE']) ? $_SERVER['HTTP_X_SIGNATURE'] : '';
     $x_request_id = isset($_SERVER['HTTP_X_REQUEST_ID']) ? $_SERVER['HTTP_X_REQUEST_ID'] : '';
@@ -39,6 +43,9 @@ function validar_assinatura_mercadopago($webhook_secret) {
         error_log('MercadoPago Webhook: Corpo da requisição inválido ou data.id ausente');
         return false;
     }
+    
+    // Armazenar o corpo parseado para uso posterior
+    $parsed_body = $body;
     
     $data_id = $body['data']['id'];
     
@@ -65,6 +72,14 @@ function validar_assinatura_mercadopago($webhook_secret) {
     // Verificar se ts e v1 foram extraídos corretamente
     if (empty($ts) || empty($v1)) {
         error_log('MercadoPago Webhook: Não foi possível extrair ts ou v1 do header x-signature');
+        return false;
+    }
+    
+    // Validar timestamp para prevenir ataques de replay
+    $timestamp = intval($ts);
+    $current_time = time();
+    if (abs($current_time - $timestamp) > MERCADOPAGO_WEBHOOK_TIMESTAMP_TOLERANCE) {
+        error_log('MercadoPago Webhook: Timestamp fora da tolerância - possível ataque de replay');
         return false;
     }
     
@@ -95,26 +110,25 @@ function processar_webhook_mercadopago() {
     // Verificar se o segredo está configurado
     if (empty($webhook_secret)) {
         error_log('MercadoPago Webhook: Segredo do webhook não configurado');
-        wp_send_json_error(array('message' => 'Configuração incompleta'), 500);
+        wp_send_json_error(array('message' => 'Unauthorized'), 401);
         return;
     }
     
     // Validar a assinatura antes de processar qualquer coisa
-    if (!validar_assinatura_mercadopago($webhook_secret)) {
+    // O corpo parseado será retornado por referência
+    $webhook_data = null;
+    if (!validar_assinatura_mercadopago($webhook_secret, $webhook_data)) {
         error_log('MercadoPago Webhook: Requisição rejeitada - assinatura inválida');
-        wp_send_json_error(array('message' => 'Assinatura inválida'), 401);
+        wp_send_json_error(array('message' => 'Unauthorized'), 401);
         return;
     }
     
     // Assinatura válida - processar o webhook
     error_log('MercadoPago Webhook: Assinatura válida - processando webhook');
     
-    // Obter os dados do webhook
-    $raw_body = file_get_contents('php://input');
-    $webhook_data = json_decode($raw_body, true);
-    
+    // Verificar se os dados do webhook são válidos
     if (!$webhook_data) {
-        wp_send_json_error(array('message' => 'Dados inválidos'), 400);
+        wp_send_json_error(array('message' => 'Unauthorized'), 401);
         return;
     }
     
