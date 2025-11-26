@@ -45,11 +45,12 @@ function validar_assinatura_mercadopago($webhook_secret, &$parsed_body = null) {
         return false;
     }
     
-    // Obter o corpo da requisição e extrair data.id
-    $raw_body = file_get_contents('php://input', false, null, 0, MERCADOPAGO_WEBHOOK_MAX_PAYLOAD_SIZE);
+    // Obter o corpo da requisição e extrair data.id (limitando a leitura)
+    $max_read = $content_length > 0 ? min($content_length, MERCADOPAGO_WEBHOOK_MAX_PAYLOAD_SIZE) : MERCADOPAGO_WEBHOOK_MAX_PAYLOAD_SIZE;
+    $raw_body = file_get_contents('php://input', false, null, 0, $max_read);
     $body = json_decode($raw_body, true);
     
-    if (json_last_error() !== JSON_ERROR_NONE || !isset($body['data']['id'])) {
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($body) || !isset($body['data']) || !is_array($body['data']) || !isset($body['data']['id'])) {
         error_log('MercadoPago Webhook: Corpo da requisição inválido ou data.id ausente');
         return false;
     }
@@ -92,9 +93,11 @@ function validar_assinatura_mercadopago($webhook_secret, &$parsed_body = null) {
     }
     
     // Validar timestamp para prevenir ataques de replay
+    // Permitir pequena margem para futuros timestamps (60s para clock skew)
+    // mas limitar timestamps antigos à tolerância configurada
     $timestamp = (int) $ts;
     $current_time = time();
-    if (abs($current_time - $timestamp) > MERCADOPAGO_WEBHOOK_TIMESTAMP_TOLERANCE) {
+    if ($timestamp > $current_time + 60 || $current_time - $timestamp > MERCADOPAGO_WEBHOOK_TIMESTAMP_TOLERANCE) {
         error_log('MercadoPago Webhook: Timestamp fora da tolerância - possível ataque de replay');
         return false;
     }
