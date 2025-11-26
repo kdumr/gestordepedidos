@@ -69,11 +69,7 @@ function validateMercadoPagoSignature(xSignature, xRequestId, dataId, secret) {
     const isValid = calculatedHash === v1;
 
     if (!isValid) {
-      console.error('[MercadoPago Webhook] Validação de assinatura falhou', {
-        expected: v1,
-        calculated: calculatedHash,
-        manifest: manifest
-      });
+      console.error('[MercadoPago Webhook] Validação de assinatura falhou');
     } else {
       console.log('[MercadoPago Webhook] Assinatura validada com sucesso');
     }
@@ -113,7 +109,7 @@ function mercadoPagoWebhookAuth(req, res, next) {
   const isValid = validateMercadoPagoSignature(
     xSignature,
     xRequestId,
-    String(dataId),
+    dataId ? String(dataId) : '',
     MERCADOPAGO_WEBHOOK_SECRET
   );
 
@@ -700,9 +696,10 @@ app.post('/webhook/mercadopago', mercadoPagoWebhookAuth, (req, res) => {
 
   } catch (err) {
     console.error('[MercadoPago Webhook] Erro ao processar notificação:', err);
-    // Mesmo em caso de erro, retornamos 200 para evitar retries desnecessários
-    // O MercadoPago reenvia webhooks que retornam erro
-    return res.status(200).json({ 
+    // Retornar 500 para erros internos genuínos
+    // Isso permite que sistemas de monitoramento detectem falhas
+    // e que o MercadoPago possa reenviar a notificação
+    return res.status(500).json({ 
       ok: false, 
       error: 'Erro interno ao processar webhook' 
     });
