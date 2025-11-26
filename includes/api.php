@@ -14,6 +14,9 @@ if (!defined('ABSPATH')) {
 // Tolerância de tempo para validação de timestamp (5 minutos em segundos)
 define('MERCADOPAGO_WEBHOOK_TIMESTAMP_TOLERANCE', 300);
 
+// Tamanho máximo do payload do webhook (1 MB)
+define('MERCADOPAGO_WEBHOOK_MAX_PAYLOAD_SIZE', 1048576);
+
 /**
  * Valida a assinatura do webhook do Mercado Pago.
  * 
@@ -35,8 +38,15 @@ function validar_assinatura_mercadopago($webhook_secret, &$parsed_body = null) {
         return false;
     }
     
+    // Verificar o tamanho do payload antes de ler
+    $content_length = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+    if ($content_length > MERCADOPAGO_WEBHOOK_MAX_PAYLOAD_SIZE) {
+        error_log('MercadoPago Webhook: Payload excede o tamanho máximo permitido');
+        return false;
+    }
+    
     // Obter o corpo da requisição e extrair data.id
-    $raw_body = file_get_contents('php://input');
+    $raw_body = file_get_contents('php://input', false, null, 0, MERCADOPAGO_WEBHOOK_MAX_PAYLOAD_SIZE);
     $body = json_decode($raw_body, true);
     
     if (json_last_error() !== JSON_ERROR_NONE || !isset($body['data']['id'])) {
@@ -75,8 +85,14 @@ function validar_assinatura_mercadopago($webhook_secret, &$parsed_body = null) {
         return false;
     }
     
+    // Validar que o timestamp é numérico antes de converter
+    if (!is_numeric($ts)) {
+        error_log('MercadoPago Webhook: Timestamp não é numérico');
+        return false;
+    }
+    
     // Validar timestamp para prevenir ataques de replay
-    $timestamp = intval($ts);
+    $timestamp = (int) $ts;
     $current_time = time();
     if (abs($current_time - $timestamp) > MERCADOPAGO_WEBHOOK_TIMESTAMP_TOLERANCE) {
         error_log('MercadoPago Webhook: Timestamp fora da tolerância - possível ataque de replay');
@@ -125,12 +141,6 @@ function processar_webhook_mercadopago() {
     
     // Assinatura válida - processar o webhook
     error_log('MercadoPago Webhook: Assinatura válida - processando webhook');
-    
-    // Verificar se os dados do webhook são válidos
-    if (!$webhook_data) {
-        wp_send_json_error(array('message' => 'Unauthorized'), 401);
-        return;
-    }
     
     // Processar de acordo com o tipo de notificação
     $action = isset($webhook_data['action']) ? $webhook_data['action'] : '';
