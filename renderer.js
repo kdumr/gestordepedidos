@@ -101,10 +101,14 @@ window.showNotification = (title, message) => {
         // Fallback para notificações web
         if (Notification.permission === 'granted') {
             new Notification(title, { body: message });
-        } else if (Notification.permission !== 'denied') {
+        } else if (Notification.permission === 'denied') {
+            console.warn('Notificações bloqueadas pelo usuário. Altere as permissões nas configurações do navegador para receber notificações.');
+        } else {
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
                     new Notification(title, { body: message });
+                } else if (permission === 'denied') {
+                    console.warn('Notificações bloqueadas pelo usuário. Altere as permissões nas configurações do navegador para receber notificações.');
                 }
             });
         }
