@@ -4,6 +4,136 @@ const cors = require('cors');
 const printer = require('@niick555/node-printer');
 const iconv = require('iconv-lite');
 const fs = require('fs');
+const crypto = require('crypto');
+
+// Configuração do webhook do MercadoPago
+// O secret pode ser definido via variável de ambiente ou arquivo de configuração
+const MERCADOPAGO_WEBHOOK_SECRET = process.env.MERCADOPAGO_WEBHOOK_SECRET || '';
+
+/**
+ * Valida a assinatura do webhook do MercadoPago
+ * Baseado na documentação oficial: https://www.mercadopago.com.br/developers/pt/docs/your-integrations/notifications/webhooks
+ * 
+ * @param {string} xSignature - Header x-signature do webhook
+ * @param {string} xRequestId - Header x-request-id do webhook
+ * @param {string} dataId - ID dos dados do webhook (data.id)
+ * @param {string} secret - Secret key configurado no MercadoPago
+ * @returns {boolean} - true se a assinatura for válida, false caso contrário
+ */
+function validateMercadoPagoSignature(xSignature, xRequestId, dataId, secret) {
+  if (!xSignature || !secret) {
+    console.warn('[MercadoPago Webhook] Assinatura ou secret não fornecidos');
+    return false;
+  }
+
+  try {
+    // 1. Extrair ts (timestamp) e v1 (hash) do header x-signature
+    // Formato: ts=1704908010,v1=618c85345248dd820d5fd456117c2ab2ef8eda45a0282ff693eac24131a5e839
+    const signatureParts = xSignature.split(',');
+    let ts = null;
+    let v1 = null;
+
+    for (const part of signatureParts) {
+      const [key, value] = part.split('=').map(s => s.trim());
+      if (key === 'ts') ts = value;
+      if (key === 'v1') v1 = value;
+    }
+
+    if (!ts || !v1) {
+      console.error('[MercadoPago Webhook] Formato de assinatura inválido - ts ou v1 não encontrados');
+      return false;
+    }
+
+    // 2. Construir a string de validação (manifest)
+    // Formato: id:[data.id];request-id:[x-request-id];ts:[ts];
+    const manifestParts = [];
+    
+    if (dataId) {
+      manifestParts.push('id:' + dataId);
+    }
+    
+    if (xRequestId) {
+      manifestParts.push('request-id:' + xRequestId);
+    }
+    
+    manifestParts.push('ts:' + ts);
+    
+    const manifest = manifestParts.join(';') + ';';
+
+    // 3. Calcular HMAC SHA256 com o secret
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(manifest);
+    const calculatedHash = hmac.digest('hex');
+
+    // 4. Comparar hash calculado com hash recebido
+    const isValid = calculatedHash === v1;
+
+    if (!isValid) {
+      console.error('[MercadoPago Webhook] Validação de assinatura falhou', {
+        expected: v1,
+        calculated: calculatedHash,
+        manifest: manifest
+      });
+    } else {
+      console.log('[MercadoPago Webhook] Assinatura validada com sucesso');
+    }
+
+    return isValid;
+  } catch (error) {
+    console.error('[MercadoPago Webhook] Erro ao validar assinatura:', error);
+    return false;
+  }
+}
+
+/**
+ * Middleware para validar assinatura do webhook do MercadoPago
+ * Este middleware deve ser usado antes de qualquer handler de webhook
+ */
+function mercadoPagoWebhookAuth(req, res, next) {
+  // Verificar se o secret está configurado
+  if (!MERCADOPAGO_WEBHOOK_SECRET) {
+    console.error('[MercadoPago Webhook] MERCADOPAGO_WEBHOOK_SECRET não configurado. Configure a variável de ambiente.');
+    return res.status(500).json({ 
+      ok: false, 
+      error: 'Webhook secret não configurado no servidor' 
+    });
+  }
+
+  // Obter headers necessários para validação
+  const xSignature = req.headers['x-signature'] || req.headers['X-Signature'];
+  const xRequestId = req.headers['x-request-id'] || req.headers['X-Request-Id'];
+  
+  // Obter o data.id do body ou query parameter
+  const dataId = (req.body && req.body.data && req.body.data.id) 
+    || (req.query && req.query['data.id']) 
+    || (req.query && req.query.id)
+    || '';
+
+  // Validar assinatura
+  const isValid = validateMercadoPagoSignature(
+    xSignature,
+    xRequestId,
+    String(dataId),
+    MERCADOPAGO_WEBHOOK_SECRET
+  );
+
+  if (!isValid) {
+    console.warn('[MercadoPago Webhook] Requisição rejeitada - assinatura inválida', {
+      ip: req.ip || req.connection.remoteAddress,
+      path: req.path,
+      hasSignature: !!xSignature,
+      hasRequestId: !!xRequestId,
+      hasDataId: !!dataId
+    });
+    return res.status(401).json({ 
+      ok: false, 
+      error: 'Assinatura do webhook inválida' 
+    });
+  }
+
+  // Assinatura válida, prosseguir
+  next();
+}
 
 const app = express();
 app.use(cors());
@@ -518,4 +648,63 @@ app.post('/print-ps', (req, res) => {
       return res.json({ ok:true, fallback:'powershell-out-printer', file:filePath });
     });
   }catch(e){ console.error('PRINT-PS failed', e); return res.status(500).json({ ok:false, error: String(e) }); }
+});
+
+// ============================================================
+// MercadoPago Webhook Endpoint com Validação de Assinatura
+// ============================================================
+// Endpoint para receber notificações do MercadoPago
+// A assinatura é validada antes de processar qualquer requisição
+// Configure MERCADOPAGO_WEBHOOK_SECRET como variável de ambiente
+
+app.post('/webhook/mercadopago', mercadoPagoWebhookAuth, (req, res) => {
+  try {
+    console.log('[MercadoPago Webhook] Notificação recebida:', {
+      type: req.body.type,
+      action: req.body.action,
+      dataId: req.body.data && req.body.data.id
+    });
+
+    const payload = req.body || {};
+    
+    // Processar diferentes tipos de notificação
+    // Tipos comuns: payment, merchant_order, subscription, preapproval, etc.
+    const notificationType = payload.type || payload.action;
+    const dataId = payload.data && payload.data.id;
+
+    // Aqui você pode adicionar a lógica específica para cada tipo de notificação
+    // Por exemplo, atualizar status de pagamento, processar pedido, etc.
+    
+    switch (notificationType) {
+      case 'payment':
+        console.log('[MercadoPago Webhook] Notificação de pagamento recebida, ID:', dataId);
+        // Adicione aqui a lógica para processar pagamentos
+        break;
+      
+      case 'merchant_order':
+        console.log('[MercadoPago Webhook] Notificação de ordem de comerciante recebida, ID:', dataId);
+        // Adicione aqui a lógica para processar ordens
+        break;
+      
+      default:
+        console.log('[MercadoPago Webhook] Tipo de notificação:', notificationType, 'ID:', dataId);
+    }
+
+    // Responder com sucesso (200 OK) para que o MercadoPago saiba que recebemos
+    return res.status(200).json({ 
+      ok: true, 
+      message: 'Webhook processado com sucesso',
+      type: notificationType,
+      dataId: dataId
+    });
+
+  } catch (err) {
+    console.error('[MercadoPago Webhook] Erro ao processar notificação:', err);
+    // Mesmo em caso de erro, retornamos 200 para evitar retries desnecessários
+    // O MercadoPago reenvia webhooks que retornam erro
+    return res.status(200).json({ 
+      ok: false, 
+      error: 'Erro interno ao processar webhook' 
+    });
+  }
 });
