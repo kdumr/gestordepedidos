@@ -1,4 +1,6 @@
 // Script do renderer process
+const NOTIFICATION_DENIED_MESSAGE = 'Notificações bloqueadas pelo usuário. Altere as permissões nas configurações do navegador para receber notificações.';
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Franguxo Gestor de Pedidos - Renderer carregado');
 
@@ -102,13 +104,13 @@ window.showNotification = (title, message) => {
         if (Notification.permission === 'granted') {
             new Notification(title, { body: message });
         } else if (Notification.permission === 'denied') {
-            console.warn('Notificações bloqueadas pelo usuário. Altere as permissões nas configurações do navegador para receber notificações.');
+            console.warn(NOTIFICATION_DENIED_MESSAGE);
         } else {
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
                     new Notification(title, { body: message });
                 } else if (permission === 'denied') {
-                    console.warn('Notificações bloqueadas pelo usuário. Altere as permissões nas configurações do navegador para receber notificações.');
+                    console.warn(NOTIFICATION_DENIED_MESSAGE);
                 }
             });
         }
